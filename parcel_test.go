@@ -48,25 +48,31 @@ func TestAddGetDelete(t *testing.T) {
 	require.NotEmpty(t, number)
 	require.Greater(t, number, 0)
 
+	parcel.Number = number
+
 	// get
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	parcelFromDB, err := store.Get(number)
 	require.NoError(t, err)
-	assert.Equal(t, parcelFromDB.Number, number)
-	assert.Equal(t, parcelFromDB.Client, parcel.Client)
-	assert.Equal(t, parcelFromDB.Status, parcel.Status)
-	assert.Equal(t, parcelFromDB.Address, parcel.Address)
-	assert.Equal(t, parcelFromDB.CreatedAt, parcel.CreatedAt)
+	assert.Equal(t, parcel, parcelFromDB)
 
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
 	err = store.Delete(number)
 	require.NoError(t, err)
+
 	noParcel, err := store.Get(number)
-	require.Error(t, err)
-	require.Empty(t, noParcel) //или Nil???
+	//require.Error(t, err)
+	require.Equal(t, sql.ErrNoRows, err)
+	// Можно проверить, что все поля объекта noParcel пустые. (как было в уроке)
+	assert.Empty(t, noParcel.Number)
+	assert.Empty(t, noParcel.Client)
+	assert.Empty(t, noParcel.Status)
+	assert.Empty(t, noParcel.Address)
+	assert.Empty(t, noParcel.CreatedAt)
+
 }
 
 // TestSetAddress проверяет обновление адреса
@@ -96,7 +102,7 @@ func TestSetAddress(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что адрес обновился
 	parcelUpdated, err := store.Get(number)
 	require.NoError(t, err)
-	assert.Equal(t, parcelUpdated.Address, newAddress)
+	assert.Equal(t, newAddress, parcelUpdated.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -125,7 +131,7 @@ func TestSetStatus(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что статус обновился
 	parcelUpdated, err := store.Get(number)
 	require.NoError(t, err)
-	assert.Equal(t, parcelUpdated.Address, testParcel.Address)
+	assert.Equal(t, ParcelStatusDelivered, parcelUpdated.Status)
 
 }
 
@@ -177,12 +183,10 @@ func TestGetByClient(t *testing.T) {
 	assert.Len(t, storedParcels, len(parcelMap))
 	for _, parcel := range storedParcels {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
-		k := parcel.Number
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
+		val, ok := parcelMap[parcel.Number]
+		assert.True(t, ok)
 		// убедитесь, что значения полей полученных посылок заполнены верно
-		assert.Equal(t, parcelMap[k].Client, parcel.Client)
-		assert.Equal(t, parcelMap[k].Status, parcel.Status)
-		assert.Equal(t, parcelMap[k].Address, parcel.Address)
-		assert.Equal(t, parcelMap[k].CreatedAt, parcel.CreatedAt)
+		assert.Equal(t, val, parcel)
 	}
 }
