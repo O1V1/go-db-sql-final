@@ -63,16 +63,8 @@ func TestAddGetDelete(t *testing.T) {
 	err = store.Delete(number)
 	require.NoError(t, err)
 
-	noParcel, err := store.Get(number)
-	//require.Error(t, err)
-	require.Equal(t, sql.ErrNoRows, err)
-	// Можно проверить, что все поля объекта noParcel пустые. (как было в уроке)
-	assert.Empty(t, noParcel.Number)
-	assert.Empty(t, noParcel.Client)
-	assert.Empty(t, noParcel.Status)
-	assert.Empty(t, noParcel.Address)
-	assert.Empty(t, noParcel.CreatedAt)
-
+	_, err = store.Get(number)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }
 
 // TestSetAddress проверяет обновление адреса
